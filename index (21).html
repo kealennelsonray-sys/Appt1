@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppointmentOne</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    .view { display: none; }
+    .view.active { display: block; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ═══ NAVBAR ═══════════════════════════════════════════════════════════════ -->
+<nav class="bg-white border-b border-gray-100 sticky top-0 z-40">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+    <span onclick="goHome()" class="flex items-center gap-1.5 cursor-pointer select-none">
+      <span class="text-teal-600 font-bold text-lg">Appointment</span>
+      <span class="bg-teal-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">ONE</span>
+    </span>
+    <div id="nav-links" class="flex items-center gap-4 text-sm"></div>
+  </div>
+</nav>
+
+<!-- ═══ VIEW: AUTH ════════════════════════════════════════════════════════════ -->
+<div id="view-auth" class="view max-w-md mx-auto px-4 pt-14">
+  <div class="text-center mb-7">
+    <span class="text-teal-600 font-bold text-2xl">Appointment</span>
+    <span class="bg-teal-600 text-white text-sm font-bold px-2 py-0.5 rounded ml-1">ONE</span>
+    <p class="text-gray-400 text-sm mt-2">Half-price Allied Health appointments near you</p>
+  </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+    <div class="flex gap-1 bg-gray-100 rounded-lg p-1 mb-6">
+      <button onclick="switchTab('login')" id="tab-login"
+        class="flex-1 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm">Sign in</button>
+      <button onclick="switchTab('signup')" id="tab-signup"
+        class="flex-1 py-2 text-sm rounded-md font-medium text-gray-500">Create account</button>
+    </div>
+
+    <!-- Login -->
+    <div id="form-login" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input id="login-email" type="email" placeholder="you@example.com"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input id="login-password" type="password" placeholder="Your password"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div id="login-error" class="hidden text-red-600 text-sm p-3 bg-red-50 rounded-lg"></div>
+      <button onclick="signIn()" id="login-btn"
+        class="w-full py-2.5 bg-teal-600 text-white font-medium rounded-lg text-sm hover:bg-teal-700 transition-colors">
+        Sign in
+      </button>
+    </div>
+
+    <!-- Signup -->
+    <div id="form-signup" class="hidden space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="cursor-pointer" onclick="selectAccountType('client')">
+            <div id="type-client" class="border-2 border-teal-500 bg-teal-50 p-3 rounded-xl">
+              <div class="text-xl">🙋</div>
+              <div class="font-medium text-sm text-gray-900">Patient / Client</div>
+              <div class="text-xs text-gray-500">Book appointments</div>
+            </div>
+          </label>
+          <label class="cursor-pointer" onclick="selectAccountType('business')">
+            <div id="type-business" class="border-2 border-gray-200 p-3 rounded-xl">
+              <div class="text-xl">🏥</div>
+              <div class="font-medium text-sm text-gray-900">Business</div>
+              <div class="text-xs text-gray-500">Offer appointments</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+        <input id="signup-name" type="text" placeholder="Jane Smith"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input id="signup-email" type="email" placeholder="you@example.com"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input id="signup-password" type="password" placeholder="Minimum 6 characters"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div id="signup-error" class="hidden text-red-600 text-sm p-3 bg-red-50 rounded-lg"></div>
+      <button onclick="signUp()" id="signup-btn"
+        class="w-full py-2.5 bg-teal-600 text-white font-medium rounded-lg text-sm hover:bg-teal-700 transition-colors">
+        Create account
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VIEW: BUSINESS DASHBOARD ═════════════════════════════════════════════ -->
+<div id="view-business-dashboard" class="view max-w-6xl mx-auto px-4 py-8">
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold text-gray-900" id="dash-greeting">Welcome back</h1>
+    <p class="text-gray-500 text-sm mt-0.5">Your AppointmentOne overview</p>
+  </div>
+  <div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-xl border border-gray-100 p-5">
+      <p class="text-sm text-gray-500">Total bookings</p>
+      <p class="text-3xl font-semibold text-gray-900 mt-1" id="stat-bookings">—</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 p-5">
+      <p class="text-sm text-gray-500">Clients</p>
+      <p class="text-3xl font-semibold text-gray-900 mt-1" id="stat-clients">—</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 p-5">
+      <p class="text-sm text-gray-500">Profile views</p>
+      <p class="text-3xl font-semibold text-gray-900 mt-1" id="stat-views">—</p>
+    </div>
+  </div>
+  <div class="bg-teal-50 border border-teal-100 rounded-xl p-5">
+    <h2 class="font-medium text-teal-900 mb-3">Get started — complete your setup</h2>
+    <div class="space-y-2.5">
+      <button onclick="showView('business-profile')" class="flex items-center gap-2 text-sm text-teal-800 hover:text-teal-600">
+        <span class="w-5 h-5 rounded-full bg-teal-200 text-teal-800 text-xs flex items-center justify-center font-medium">1</span>
+        Complete your business profile
+      </button>
+      <button onclick="showView('business-calendar')" class="flex items-center gap-2 text-sm text-teal-800 hover:text-teal-600">
+        <span class="w-5 h-5 rounded-full bg-teal-200 text-teal-800 text-xs flex items-center justify-center font-medium">2</span>
+        Add your first available timeslots
+      </button>
+      <button onclick="showView('business-profile')" class="flex items-center gap-2 text-sm text-teal-800 hover:text-teal-600">
+        <span class="w-5 h-5 rounded-full bg-teal-200 text-teal-800 text-xs flex items-center justify-center font-medium">3</span>
+        Upload your logo and photos
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VIEW: BUSINESS PROFILE ═══════════════════════════════════════════════ -->
+<div id="view-business-profile" class="view max-w-2xl mx-auto px-4 py-8">
+  <h1 class="text-xl font-semibold text-gray-900 mb-6">Business profile</h1>
+  <div class="bg-white rounded-xl border border-gray-100 p-6 space-y-5">
+    <!-- Logo -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+      <div class="flex items-center gap-4">
+        <div id="logo-placeholder" class="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center text-2xl">🏥</div>
+        <img id="logo-preview" src="" alt="" class="w-16 h-16 rounded-xl object-cover hidden">
+        <label class="cursor-pointer px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-teal-400 transition-colors">
+          Upload logo
+          <input type="file" accept="image/*" class="hidden" onchange="uploadLogo(this)">
+        </label>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Business name</label>
+        <input id="bp-name" type="text" placeholder="My Practice"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div class="col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea id="bp-desc" rows="3" placeholder="Tell clients about your practice..."
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+        <select id="bp-category" class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+          <option value="">Select category</option>
+          <optgroup label="Allied Health">
+            <option value="physiotherapy">Physiotherapy</option>
+            <option value="chiropractic">Chiropractic</option>
+            <option value="osteopathy">Osteopathy</option>
+            <option value="dietitian">Dietitian</option>
+            <option value="occupational_therapy">Occupational Therapy</option>
+            <option value="speech_pathology">Speech Pathology</option>
+            <option value="podiatry">Podiatry</option>
+            <option value="psychology">Psychology</option>
+            <option value="exercise_physiology">Exercise Physiology</option>
+            <option value="optometry">Optometry</option>
+            <option value="audiology">Audiology</option>
+            <option value="radiography">Radiography</option>
+            <option value="dental">Dental</option>
+            <option value="pharmacy">Pharmacy</option>
+            <option value="naturopathy">Naturopathy</option>
+            <option value="acupuncture">Acupuncture</option>
+            <option value="massage_therapy">Massage Therapy</option>
+            <option value="myotherapy">Myotherapy</option>
+          </optgroup>
+          <optgroup label="Wellness & Fitness">
+            <option value="sauna">Sauna</option>
+            <option value="spa">Spa</option>
+            <option value="steam_room">Steam Room</option>
+            <option value="gym">Gym</option>
+            <option value="pilates">Pilates</option>
+            <option value="yoga">Yoga</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Hourly rate ($)</label>
+        <input id="bp-rate" type="number" min="0" step="5" placeholder="100"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div class="col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Street address</label>
+        <input id="bp-address" type="text" placeholder="123 Main St"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">City / Suburb</label>
+        <input id="bp-city" type="text"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
+        <select id="bp-state" class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+          <option value="">Select</option>
+          <option>QLD</option><option>NSW</option><option>VIC</option><option>SA</option>
+          <option>WA</option><option>TAS</option><option>NT</option><option>ACT</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Postcode</label>
+        <input id="bp-postcode" type="text" maxlength="4"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+        <input id="bp-phone" type="tel"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input id="bp-email" type="email"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+        <input id="bp-website" type="url" placeholder="https://"
+          class="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+    </div>
+    <!-- Gallery -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Gallery photos (max 8)</label>
+      <div id="photo-grid" class="grid grid-cols-4 gap-2 mb-2"></div>
+      <label id="add-photo-btn" class="cursor-pointer px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-teal-400 transition-colors inline-block">
+        + Add photo
+        <input type="file" accept="image/*" class="hidden" onchange="uploadPhoto(this)">
+      </label>
+    </div>
+    <div id="profile-msg" class="hidden p-3 rounded-lg text-sm"></div>
+    <button onclick="saveProfile()"
+      class="w-full py-2.5 bg-teal-600 text-white font-medium rounded-lg text-sm hover:bg-teal-700 transition-colors">
+      Save profile
+    </button>
+  </div>
+</div>
+
+<!-- ═══ VIEW: BUSINESS CALENDAR ══════════════════════════════════════════════ -->
+<div id="view-business-calendar" class="view max-w-2xl mx-auto px-4 py-8">
+  <h1 class="text-xl font-semibold text-gray-900 mb-6">Manage timeslots</h1>
+  <div class="bg-white rounded-xl border border-gray-100 p-6 mb-4">
+    <div class="flex items-center justify-between mb-4">
+      <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 text-lg leading-none">&#8592;</button>
+      <h2 class="font-semibold text-gray-900" id="cal-month-label"></h2>
+      <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 text-lg leading-none">&#8594;</button>
+    </div>
+    <div class="grid grid-cols-7 text-center text-xs text-gray-400 mb-2 gap-1">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+    <div id="cal-grid" class="grid grid-cols-7 gap-1 text-sm"></div>
+    <p class="text-xs text-gray-400 mt-3 text-center">Click any future date to add an available timeslot</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-100 p-6">
+    <h3 class="font-medium text-gray-900 mb-4">Upcoming slots</h3>
+    <div id="slot-list" class="space-y-2 text-sm"></div>
+  </div>
+</div>
+
+<!-- ═══ VIEW: BUSINESS BOOKINGS ══════════════════════════════════════════════ -->
+<div id="view-business-bookings" class="view max-w-3xl mx-auto px-4 py-8">
+  <h1 class="text-xl font-semibold text-gray-900 mb-6">Bookings</h1>
+  <div class="flex gap-2 mb-5">
+    <button onclick="loadBookings('upcoming')" id="btn-upcoming"
+      class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium">Upcoming</button>
+    <button onclick="loadBookings('past')" id="btn-past"
+      class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm hover:border-teal-400 transition-colors">Past</button>
+  </div>
+  <div id="bookings-list" class="space-y-3"></div>
+</div>
+
+<!-- ═══ VIEW: BUSINESS CLIENTS ════════════════════════════════════════════════ -->
+<div id="view-business-clients" class="view max-w-3xl mx-auto px-4 py-8">
+  <h1 class="text-xl font-semibold text-gray-900 mb-6">Clients</h1>
+  <div id="clients-list" class="space-y-3"></div>
+</div>
+
+<!-- ═══ VIEW: CLIENT FEED ═════════════════════════════════════════════════════ -->
+<div id="view-client-feed" class="view max-w-6xl mx-auto px-4 py-8">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-gray-900">Available deals near you</h1>
+    <p class="text-gray-500 text-sm mt-0.5">Half-price appointments from local health practices</p>
+  </div>
+  <div id="location-bar" class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 flex items-center justify-between">
+    <span class="text-sm text-amber-800">Allow location access to find deals near you</span>
+    <button onclick="getLocation()" class="px-3 py-1.5 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 transition-colors">
+      Enable location
+    </button>
+  </div>
+  <!-- Category filters -->
+  <div class="flex gap-2 flex-wrap mb-6">
+    <button onclick="filterCat('')" data-cat="" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-teal-600 text-white border border-teal-600">All</button>
+    <button onclick="filterCat('physiotherapy')" data-cat="physiotherapy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Physiotherapy</button>
+    <button onclick="filterCat('chiropractic')" data-cat="chiropractic" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Chiropractic</button>
+    <button onclick="filterCat('osteopathy')" data-cat="osteopathy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Osteopathy</button>
+    <button onclick="filterCat('massage_therapy')" data-cat="massage_therapy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Massage</button>
+    <button onclick="filterCat('psychology')" data-cat="psychology" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Psychology</button>
+    <button onclick="filterCat('dietitian')" data-cat="dietitian" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Dietitian</button>
+    <button onclick="filterCat('podiatry')" data-cat="podiatry" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Podiatry</button>
+    <button onclick="filterCat('exercise_physiology')" data-cat="exercise_physiology" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Exercise Physiology</button>
+    <button onclick="filterCat('pilates')" data-cat="pilates" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Pilates</button>
+    <button onclick="filterCat('yoga')" data-cat="yoga" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Yoga</button>
+    <button onclick="filterCat('gym')" data-cat="gym" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Gym</button>
+    <button onclick="filterCat('sauna')" data-cat="sauna" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Sauna</button>
+    <button onclick="filterCat('spa')" data-cat="spa" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Spa</button>
+    <button onclick="filterCat('acupuncture')" data-cat="acupuncture" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Acupuncture</button>
+    <button onclick="filterCat('naturopathy')" data-cat="naturopathy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Naturopathy</button>
+  </div>
+  <div id="feed-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</div>
+
+<!-- ═══ VIEW: PRACTICE DETAIL ═════════════════════════════════════════════════ -->
+<div id="view-practice" class="view max-w-3xl mx-auto px-4 py-8">
+  <button onclick="showView('client-feed')" class="flex items-center gap-2 text-sm text-gray-500 hover:text-teal-600 mb-6">
+    &#8592; Back to deals
+  </button>
+  <div id="practice-content"></div>
+</div>
+
+<!-- ═══ MODAL: ADD SLOT ════════════════════════════════════════════════════════ -->
+<div id="modal-slot" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl p-6 w-full max-w-sm">
+    <h3 class="font-semibold text-gray-900 mb-0.5">Add timeslot</h3>
+    <p class="text-sm text-gray-500 mb-4" id="modal-date-label"></p>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Start time</label>
+          <input type="time" id="slot-start" value="09:00"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">End time</label>
+          <input type="time" id="slot-end" value="10:00"
+            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+      </div>
+      <div class="bg-teal-50 rounded-lg p-3 text-sm text-teal-800">
+        Discounted price: <strong id="slot-price-label">$0.00</strong> <span class="text-teal-600">(50% off)</span>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="closeModal('modal-slot')" class="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+      <button onclick="saveSlot()" class="flex-1 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700">Add slot</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: BOOK ════════════════════════════════════════════════════════════ -->
+<div id="modal-book" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl p-6 w-full max-w-sm">
+    <h3 class="font-semibold text-gray-900 mb-1">Confirm booking</h3>
+    <div id="book-slot-info" class="text-sm text-gray-500 mb-4"></div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Your name</label>
+        <input id="book-name" type="text"
+          class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Email</label>
+        <input id="book-email" type="email"
+          class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+        <input id="book-phone" type="tel"
+          class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+      </div>
+      <div id="book-error" class="hidden text-red-600 text-sm p-3 bg-red-50 rounded-lg"></div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="closeModal('modal-book')" class="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600">Cancel</button>
+      <button onclick="confirmBooking()" class="flex-1 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700">Book now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: REVIEW ═════════════════════════════════════════════════════════ -->
+<div id="modal-review" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl p-6 w-full max-w-sm">
+    <h3 class="font-semibold text-gray-900 mb-4">Leave a review</h3>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-2">Rating</label>
+        <div id="star-input" class="flex gap-1"></div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Comment</label>
+        <textarea id="review-comment" rows="3" placeholder="Share your experience..."
+          class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"></textarea>
+      </div>
+      <div id="review-error" class="hidden text-red-600 text-sm p-3 bg-red-50 rounded-lg"></div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="closeModal('modal-review')" class="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600">Cancel</button>
+      <button onclick="submitReview()" class="flex-1 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+  JAVASCRIPT — All app logic
+═══════════════════════════════════════════════════════════════════════════ -->
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG: Replace these two values with your Supabase project details
+// Find them in: supabase.com → your project → Settings → API
+// ─────────────────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://wqskauwqfawathnqlvfs.supabase.co
+'
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc2thdXdxZmF3YXRobnFsdmZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTgzMDgsImV4cCI6MjA5MDE3NDMwOH0.vwmMAKyLbEQIBx-ezf6ZxI5fncmdaxOMwic9h_4Z5Kc'
+// ─────────────────────────────────────────────────────────────────────────────
+
+const { createClient } = window.supabase
+const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+// App state
+let currentUser     = null
+let selectedDate    = null
+let selectedSlotId  = null
+let currentBizId    = null
+let selectedRating  = 5
+let calYear         = new Date().getFullYear()
+let calMonth        = new Date().getMonth()
+let calSlots        = []
+let allDeals        = []
+let currentCategory = ''
+let clientLat       = null
+let clientLng       = null
+let bizRate         = 0
+let signupType      = 'client'
+
+// ─── ROUTER ──────────────────────────────────────────────────────────────────
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
+  const el = document.getElementById('view-' + name)
+  if (el) el.classList.add('active')
+  window.scrollTo(0, 0)
+  if (name === 'business-dashboard') loadDashboard()
+  if (name === 'business-profile')   loadProfile()
+  if (name === 'business-calendar')  { loadCalSlots().then(renderCalendar) }
+  if (name === 'business-bookings')  loadBookings('upcoming')
+  if (name === 'business-clients')   loadClients()
+  if (name === 'client-feed')        loadFeed()
+}
+
+function goHome() {
+  if (!currentUser) { showView('auth'); return }
+  showView(currentUser.user_metadata?.account_type === 'business' ? 'business-dashboard' : 'client-feed')
+}
+
+// ─── NAVBAR ──────────────────────────────────────────────────────────────────
+function updateNavbar() {
+  const el = document.getElementById('nav-links')
+  if (!currentUser) {
+    el.innerHTML = `
+      <button onclick="switchTab('login')" class="text-gray-600 hover:text-teal-600">Sign in</button>
+      <button onclick="showView('auth');switchTab('signup')" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">Get started</button>`
+    return
+  }
+  const isBiz = currentUser.user_metadata?.account_type === 'business'
+  el.innerHTML = isBiz
+    ? `<button onclick="showView('business-dashboard')" class="text-gray-600 hover:text-teal-600">Dashboard</button>
+       <button onclick="showView('business-profile')" class="text-gray-600 hover:text-teal-600">Profile</button>
+       <button onclick="showView('business-calendar')" class="text-gray-600 hover:text-teal-600">Calendar</button>
+       <button onclick="showView('business-bookings')" class="text-gray-600 hover:text-teal-600">Bookings</button>
+       <button onclick="showView('business-clients')" class="text-gray-600 hover:text-teal-600">Clients</button>
+       <button onclick="signOut()" class="text-gray-400 hover:text-red-500">Sign out</button>`
+    : `<button onclick="showView('client-feed')" class="text-gray-600 hover:text-teal-600">Deals</button>
+       <button onclick="signOut()" class="text-gray-400 hover:text-red-500">Sign out</button>`
+}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  const isLogin = tab === 'login'
+  showView('auth')
+  document.getElementById('form-login').classList.toggle('hidden', !isLogin)
+  document.getElementById('form-signup').classList.toggle('hidden', isLogin)
+  document.getElementById('tab-login').className =
+    `flex-1 py-2 text-sm rounded-md font-medium transition-all ${isLogin ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`
+  document.getElementById('tab-signup').className =
+    `flex-1 py-2 text-sm rounded-md font-medium transition-all ${!isLogin ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`
+}
+
+function selectAccountType(type) {
+  signupType = type
+  document.getElementById('type-client').className =
+    type === 'client'
+      ? 'border-2 border-teal-500 bg-teal-50 p-3 rounded-xl'
+      : 'border-2 border-gray-200 p-3 rounded-xl hover:border-gray-300'
+  document.getElementById('type-business').className =
+    type === 'business'
+      ? 'border-2 border-teal-500 bg-teal-50 p-3 rounded-xl'
+      : 'border-2 border-gray-200 p-3 rounded-xl hover:border-gray-300'
+}
+
+async function signIn() {
+  const email = document.getElementById('login-email').value.trim()
+  const password = document.getElementById('login-password').value
+  const btn = document.getElementById('login-btn')
+  const err = document.getElementById('login-error')
+  err.classList.add('hidden')
+  btn.textContent = 'Signing in…'; btn.disabled = true
+  const { error } = await db.auth.signInWithPassword({ email, password })
+  if (error) { err.textContent = error.message; err.classList.remove('hidden') }
+  btn.textContent = 'Sign in'; btn.disabled = false
+}
+
+async function signUp() {
+  const name  = document.getElementById('signup-name').value.trim()
+  const email = document.getElementById('signup-email').value.trim()
+  const pass  = document.getElementById('signup-password').value
+  const btn   = document.getElementById('signup-btn')
+  const err   = document.getElementById('signup-error')
+  err.classList.add('hidden')
+  if (!name || !email || !pass) { err.textContent = 'All fields are required'; err.classList.remove('hidden'); return }
+  btn.textContent = 'Creating account…'; btn.disabled = true
+  const { data, error } = await db.auth.signUp({
+    email, password: pass,
+    options: { data: { account_type: signupType, full_name: name } }
+  })
+  if (error) { err.textContent = error.message; err.classList.remove('hidden'); btn.textContent = 'Create account'; btn.disabled = false; return }
+  if (data.user) {
+    await db.from('profiles').upsert({ id: data.user.id, account_type: signupType, full_name: name })
+    if (signupType === 'business') {
+      await db.from('business_profiles').upsert({ id: data.user.id, email })
+    }
+  }
+  btn.textContent = 'Create account'; btn.disabled = false
+}
+
+async function signOut() {
+  await db.auth.signOut()
+}
+
+// ─── BUSINESS DASHBOARD ──────────────────────────────────────────────────────
+async function loadDashboard() {
+  const name = currentUser.user_metadata?.full_name?.split(' ')[0] || 'there'
+  document.getElementById('dash-greeting').textContent = `Welcome back, ${name}`
+  const [b, c, v] = await Promise.all([
+    db.from('bookings').select('id', { count: 'exact', head: true }).eq('business_id', currentUser.id),
+    db.from('bookings').select('client_id', { count: 'exact', head: true }).eq('business_id', currentUser.id),
+    db.from('listing_clicks').select('id', { count: 'exact', head: true }).eq('business_id', currentUser.id)
+  ])
+  document.getElementById('stat-bookings').textContent = b.count ?? 0
+  document.getElementById('stat-clients').textContent  = c.count ?? 0
+  document.getElementById('stat-views').textContent    = v.count ?? 0
+}
+
+// ─── BUSINESS PROFILE ────────────────────────────────────────────────────────
+async function loadProfile() {
+  const { data } = await db.from('business_profiles').select('*').eq('id', currentUser.id).single()
+  if (!data) return
+  bizRate = parseFloat(data.hourly_rate) || 0
+  document.getElementById('bp-name').value     = data.business_name || ''
+  document.getElementById('bp-desc').value     = data.description || ''
+  document.getElementById('bp-category').value = data.category || ''
+  document.getElementById('bp-rate').value     = data.hourly_rate || ''
+  document.getElementById('bp-address').value  = data.address || ''
+  document.getElementById('bp-city').value     = data.city || ''
+  document.getElementById('bp-state').value    = data.state || ''
+  document.getElementById('bp-postcode').value = data.postcode || ''
+  document.getElementById('bp-phone').value    = data.phone || ''
+  document.getElementById('bp-email').value    = data.email || ''
+  document.getElementById('bp-website').value  = data.website || ''
+  if (data.logo_url) {
+    document.getElementById('logo-preview').src = data.logo_url
+    document.getElementById('logo-preview').classList.remove('hidden')
+    document.getElementById('logo-placeholder').classList.add('hidden')
+  }
+  loadPhotos()
+}
+
+async function saveProfile() {
+  const address  = document.getElementById('bp-address').value
+  const city     = document.getElementById('bp-city').value
+  const state    = document.getElementById('bp-state').value
+  const postcode = document.getElementById('bp-postcode').value
+  const rate     = parseFloat(document.getElementById('bp-rate').value) || 0
+  bizRate = rate
+  const msg = document.getElementById('profile-msg')
+  msg.className = 'p-3 rounded-lg text-sm bg-gray-50 text-gray-600'
+  msg.textContent = 'Saving…'; msg.classList.remove('hidden')
+
+  // Free geocoding via OpenStreetMap — no API key needed
+  let lat = null, lng = null
+  const fullAddr = [address, city, state, postcode, 'Australia'].filter(Boolean).join(', ')
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullAddr)}&format=json&limit=1`)
+    const geo = await res.json()
+    if (geo.length) { lat = parseFloat(geo[0].lat); lng = parseFloat(geo[0].lon) }
+  } catch(e) {}
+
+  const { error } = await db.from('business_profiles').upsert({
+    id: currentUser.id,
+    business_name: document.getElementById('bp-name').value,
+    description:   document.getElementById('bp-desc').value,
+    category:      document.getElementById('bp-category').value,
+    hourly_rate:   rate, address, city, state, postcode,
+    phone:         document.getElementById('bp-phone').value,
+    email:         document.getElementById('bp-email').value,
+    website:       document.getElementById('bp-website').value,
+    latitude: lat, longitude: lng
+  })
+  if (error) {
+    msg.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-600'
+    msg.textContent = error.message
+  } else {
+    msg.className = 'p-3 rounded-lg text-sm bg-teal-50 text-teal-700'
+    msg.textContent = lat ? '✓ Profile saved and location detected!' : '✓ Profile saved! (Enter full address for distance filtering)'
+  }
+}
+
+async function uploadLogo(input) {
+  const file = input.files[0]; if (!file) return
+  const path = `${currentUser.id}/logo.${file.name.split('.').pop()}`
+  const { error } = await db.storage.from('logos').upload(path, file, { upsert: true })
+  if (error) { alert('Upload failed: ' + error.message); return }
+  const { data } = db.storage.from('logos').getPublicUrl(path)
+  await db.from('business_profiles').upsert({ id: currentUser.id, logo_url: data.publicUrl })
+  document.getElementById('logo-preview').src = data.publicUrl
+  document.getElementById('logo-preview').classList.remove('hidden')
+  document.getElementById('logo-placeholder').classList.add('hidden')
+}
+
+async function loadPhotos() {
+  const { data } = await db.from('business_photos').select('*').eq('business_id', currentUser.id).order('sort_order')
+  const grid = document.getElementById('photo-grid')
+  grid.innerHTML = (data || []).map(p => `
+    <div class="relative group aspect-square">
+      <img src="${p.photo_url}" class="w-full h-full object-cover rounded-lg">
+      <button onclick="deletePhoto('${p.id}')"
+        class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs hidden group-hover:flex items-center justify-center font-bold leading-none">×</button>
+    </div>`).join('')
+  document.getElementById('add-photo-btn').style.display = (data || []).length >= 8 ? 'none' : ''
+}
+
+async function uploadPhoto(input) {
+  const file = input.files[0]; if (!file) return
+  const { data: ex } = await db.from('business_photos').select('id').eq('business_id', currentUser.id)
+  if ((ex || []).length >= 8) { alert('Maximum 8 photos'); return }
+  const path = `${currentUser.id}/${Date.now()}.${file.name.split('.').pop()}`
+  const { error } = await db.storage.from('photos').upload(path, file)
+  if (error) { alert('Upload failed: ' + error.message); return }
+  const { data } = db.storage.from('photos').getPublicUrl(path)
+  await db.from('business_photos').insert({ business_id: currentUser.id, photo_url: data.publicUrl, sort_order: (ex || []).length })
+  loadPhotos()
+}
+
+async function deletePhoto(id) {
+  await db.from('business_photos').delete().eq('id', id)
+  loadPhotos()
+}
+
+// ─── CALENDAR ────────────────────────────────────────────────────────────────
+async function loadCalSlots() {
+  const { data } = await db.from('time_slots').select('*')
+    .eq('business_id', currentUser.id)
+    .gte('slot_date', new Date().toISOString().split('T')[0])
+    .order('slot_date').order('start_time')
+  calSlots = data || []
+  // Refresh rate
+  const { data: bp } = await db.from('business_profiles').select('hourly_rate').eq('id', currentUser.id).single()
+  bizRate = parseFloat(bp?.hourly_rate) || 0
+  renderSlotList()
+}
+
+function renderCalendar() {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const firstDay   = new Date(calYear, calMonth, 1).getDay()
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
+  document.getElementById('cal-month-label').textContent = `${MONTHS[calMonth]} ${calYear}`
+
+  const today = new Date(); today.setHours(0,0,0,0)
+  const slotDays = new Set(
+    calSlots.filter(s => {
+      const d = new Date(s.slot_date + 'T00:00:00')
+      return d.getFullYear() === calYear && d.getMonth() === calMonth
+    }).map(s => parseInt(s.slot_date.split('-')[2]))
+  )
+
+  let cells = ''
+  for (let i = 0; i < firstDay; i++) cells += '<div></div>'
+  for (let d = 1; d <= daysInMonth; d++) {
+    const thisDate = new Date(calYear, calMonth, d)
+    const isPast   = thisDate < today
+    const isToday  = thisDate.getTime() === today.getTime()
+    const hasSlot  = slotDays.has(d)
+    const dStr     = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    cells += `<div onclick="${!isPast ? `openSlotModal('${dStr}')` : ''}"
+      class="aspect-square flex flex-col items-center justify-center rounded-lg text-sm select-none
+        ${isPast ? 'text-gray-300 cursor-default' : 'cursor-pointer hover:bg-teal-50'}
+        ${hasSlot ? 'bg-teal-100 text-teal-800 font-semibold' : ''}
+        ${isToday ? 'ring-2 ring-teal-500' : ''}">
+      ${d}
+      ${hasSlot ? '<div class="w-1.5 h-1.5 rounded-full bg-teal-500 mt-0.5"></div>' : ''}
+    </div>`
+  }
+  document.getElementById('cal-grid').innerHTML = cells
+}
+
+function renderSlotList() {
+  const el = document.getElementById('slot-list')
+  if (!calSlots.length) {
+    el.innerHTML = '<p class="text-gray-400">No upcoming slots yet. Click a date to add one.</p>'; return
+  }
+  el.innerHTML = calSlots.map(s => `
+    <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+      <div>
+        <span class="font-medium text-gray-800">${fmtDate(s.slot_date)}</span>
+        <span class="text-gray-500 ml-2">${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</span>
+        <span class="ml-2 text-xs px-2 py-0.5 rounded-full ${s.status === 'booked' ? 'bg-green-100 text-green-700' : 'bg-teal-100 text-teal-700'}">${s.status}</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-teal-600 font-semibold">$${s.discounted_price}</span>
+        ${s.status === 'available' ? `<button onclick="deleteSlot('${s.id}')" class="text-gray-300 hover:text-red-400 text-xl leading-none">&times;</button>` : ''}
+      </div>
+    </div>`).join('')
+}
+
+function prevMonth() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear-- } renderCalendar() }
+function nextMonth() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++ } renderCalendar() }
+
+function openSlotModal(dStr) {
+  selectedDate = dStr
+  const d = new Date(dStr + 'T00:00:00')
+  document.getElementById('modal-date-label').textContent = d.toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+  document.getElementById('slot-price-label').textContent = `$${(bizRate / 2).toFixed(2)}`
+  document.getElementById('slot-start').value = '09:00'
+  document.getElementById('slot-end').value   = '10:00'
+  document.getElementById('modal-slot').classList.remove('hidden')
+}
+
+async function saveSlot() {
+  const start = document.getElementById('slot-start').value
+  const end   = document.getElementById('slot-end').value
+  if (!start || !end || start >= end) { alert('Enter valid start and end times (start must be before end)'); return }
+  const { error } = await db.from('time_slots').insert({
+    business_id:      currentUser.id,
+    slot_date:        selectedDate,
+    start_time:       start + ':00',
+    end_time:         end + ':00',
+    original_price:   bizRate,
+    discounted_price: Math.round((bizRate / 2) * 100) / 100,
+    status:           'available'
+  })
+  if (error) { alert(error.message); return }
+  closeModal('modal-slot')
+  await loadCalSlots()
+  renderCalendar()
+}
+
+async function deleteSlot(id) {
+  if (!confirm('Delete this slot?')) return
+  await db.from('time_slots').delete().eq('id', id)
+  calSlots = calSlots.filter(s => s.id !== id)
+  renderSlotList(); renderCalendar()
+}
+
+// ─── BOOKINGS ────────────────────────────────────────────────────────────────
+async function loadBookings(tab) {
+  document.getElementById('btn-upcoming').className = `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab==='upcoming'?'bg-teal-600 text-white':'bg-white border border-gray-200 text-gray-600 hover:border-teal-400'}`
+  document.getElementById('btn-past').className     = `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab==='past'?'bg-teal-600 text-white':'bg-white border border-gray-200 text-gray-600 hover:border-teal-400'}`
+  const today = new Date().toISOString().split('T')[0]
+  const { data } = await db.from('bookings')
+    .select('*, time_slots(slot_date, start_time, end_time)')
+    .eq('business_id', currentUser.id)
+    .eq('status', 'confirmed')
+    .order('created_at', { ascending: false })
+
+  const filtered = (data || []).filter(b =>
+    tab === 'upcoming'
+      ? (b.time_slots?.slot_date || '') >= today
+      : (b.time_slots?.slot_date || '') < today
+  )
+
+  const el = document.getElementById('bookings-list')
+  if (!filtered.length) { el.innerHTML = `<p class="text-gray-400 text-sm">No ${tab} bookings.</p>`; return }
+  el.innerHTML = filtered.map(b => `
+    <div class="bg-white rounded-xl border border-gray-100 p-5 flex items-start justify-between">
+      <div>
+        <p class="font-medium text-gray-900">${b.client_name}</p>
+        <p class="text-sm text-gray-500">${b.client_email}</p>
+        <p class="text-sm text-gray-500">${b.client_phone || 'No phone provided'}</p>
+      </div>
+      ${b.time_slots ? `<div class="text-right text-sm">
+        <p class="font-medium text-teal-600">${fmtDate(b.time_slots.slot_date)}</p>
+        <p class="text-gray-500">${fmtTime(b.time_slots.start_time)} – ${fmtTime(b.time_slots.end_time)}</p>
+      </div>` : ''}
+    </div>`).join('')
+}
+
+// ─── CLIENTS ─────────────────────────────────────────────────────────────────
+async function loadClients() {
+  const { data } = await db.from('bookings').select('client_name, client_email, client_phone, created_at')
+    .eq('business_id', currentUser.id).order('created_at', { ascending: false })
+  const el = document.getElementById('clients-list')
+  if (!data?.length) { el.innerHTML = '<p class="text-gray-400 text-sm">No clients yet.</p>'; return }
+  const seen = new Set()
+  const unique = data.filter(c => { if (seen.has(c.client_email)) return false; seen.add(c.client_email); return true })
+  el.innerHTML = unique.map(c => `
+    <div class="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
+      <div>
+        <p class="font-medium text-gray-900">${c.client_name}</p>
+        <p class="text-sm text-gray-500">${c.client_email}</p>
+      </div>
+      <div class="text-right text-sm">
+        <p class="text-gray-600">${c.client_phone || '—'}</p>
+        <p class="text-xs text-gray-400">First booked ${new Date(c.created_at).toLocaleDateString('en-AU')}</p>
+      </div>
+    </div>`).join('')
+}
+
+// ─── CLIENT FEED ─────────────────────────────────────────────────────────────
+function getLocation() {
+  if (!navigator.geolocation) { alert('Geolocation not supported in this browser'); return }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      clientLat = pos.coords.latitude; clientLng = pos.coords.longitude
+      document.getElementById('location-bar').innerHTML =
+        `<span class="text-sm text-teal-700">✓ Showing deals within 50km of your location</span>`
+      renderFeed()
+    },
+    () => {
+      document.getElementById('location-bar').innerHTML =
+        `<span class="text-sm text-amber-700">Location denied — showing all available deals</span>`
+    }
+  )
+}
+
+async function loadFeed() {
+  const today = new Date().toISOString().split('T')[0]
+  const { data } = await db.from('business_profiles')
+    .select('*, time_slots!inner(id, slot_date, start_time, end_time, discounted_price, original_price, status)')
+    .eq('is_active', true)
+    .eq('time_slots.status', 'available')
+    .gte('time_slots.slot_date', today)
+
+  // One deal per business — the earliest available slot
+  const map = {}
+  ;(data || []).forEach(b => {
+    if (!b.time_slots?.length) return
+    const earliest = [...b.time_slots].sort((a, x) =>
+      a.slot_date.localeCompare(x.slot_date) || a.start_time.localeCompare(x.start_time)
+    )[0]
+    map[b.id] = { ...b, nextSlot: earliest }
+  })
+  allDeals = Object.values(map)
+  renderFeed()
+}
+
+function renderFeed() {
+  let deals = allDeals
+  if (currentCategory) deals = deals.filter(d => d.category === currentCategory)
+  if (clientLat && clientLng) {
+    deals = deals.filter(d => !d.latitude || !d.longitude || distKm(clientLat, clientLng, d.latitude, d.longitude) <= 50)
+  }
+  const el = document.getElementById('feed-grid')
+  if (!deals.length) {
+    el.innerHTML = `<div class="col-span-3 text-center py-16">
+      <div class="text-4xl mb-3">📍</div>
+      <p class="text-gray-500 font-medium">No deals available right now</p>
+      <p class="text-sm text-gray-400 mt-1">Check back soon as more practices sign up</p>
+    </div>`; return
+  }
+  el.innerHTML = deals.map(d => `
+    <div onclick="openPractice('${d.id}')" class="bg-white rounded-xl border border-gray-100 p-5 cursor-pointer hover:border-teal-300 hover:shadow-sm transition-all">
+      <div class="flex items-start gap-3 mb-3">
+        ${d.logo_url
+          ? `<img src="${d.logo_url}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0">`
+          : `<div class="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center text-xl flex-shrink-0">🏥</div>`}
+        <div class="flex-1 min-w-0">
+          <h3 class="font-semibold text-gray-900 truncate">${d.business_name}</h3>
+          <p class="text-xs text-gray-500 mt-0.5">${[d.city, d.state].filter(Boolean).join(', ')}</p>
+          <span class="inline-block mt-1 text-xs px-2 py-0.5 bg-teal-50 text-teal-700 rounded-full">${catLabel(d.category)}</span>
+        </div>
+      </div>
+      <div class="border-t border-gray-50 pt-3 flex items-end justify-between">
+        <div>
+          <p class="text-xs font-medium text-gray-700">${fmtDate(d.nextSlot.slot_date)}</p>
+          <p class="text-xs text-gray-400">${fmtTime(d.nextSlot.start_time)} — next available</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xl font-bold text-teal-600">$${d.nextSlot.discounted_price}</p>
+          <p class="text-xs text-gray-400 line-through">$${d.nextSlot.original_price}</p>
+        </div>
+      </div>
+    </div>`).join('')
+}
+
+function filterCat(cat) {
+  currentCategory = cat
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    const active = btn.dataset.cat === cat
+    btn.className = `cat-btn px-3 py-1.5 rounded-full text-sm border transition-colors ${active ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 border-gray-200 hover:border-teal-400'}`
+  })
+  renderFeed()
+}
+
+// ─── PRACTICE DETAIL ─────────────────────────────────────────────────────────
+async function openPractice(bizId) {
+  currentBizId = bizId
+  if (currentUser) await db.from('listing_clicks').insert({ business_id: bizId, client_id: currentUser.id })
+  showView('practice')
+  document.getElementById('practice-content').innerHTML = '<p class="text-gray-400 text-sm">Loading…</p>'
+
+  const today = new Date().toISOString().split('T')[0]
+  const [{ data: biz }, { data: slots }, { data: photos }, { data: reviews }] = await Promise.all([
+    db.from('business_profiles').select('*').eq('id', bizId).single(),
+    db.from('time_slots').select('*').eq('business_id', bizId).eq('status', 'available').gte('slot_date', today).order('slot_date').order('start_time').limit(12),
+    db.from('business_photos').select('*').eq('business_id', bizId).order('sort_order'),
+    db.from('reviews').select('*').eq('business_id', bizId).order('created_at', { ascending: false })
+  ])
+  if (!biz) { document.getElementById('practice-content').innerHTML = '<p class="text-red-500">Not found</p>'; return }
+
+  const avg = reviews?.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null
+
+  document.getElementById('practice-content').innerHTML = `
+    <div class="flex items-start gap-4 mb-6">
+      ${biz.logo_url
+        ? `<img src="${biz.logo_url}" class="w-20 h-20 rounded-2xl object-cover">`
+        : `<div class="w-20 h-20 rounded-2xl bg-teal-100 flex items-center justify-center text-3xl">🏥</div>`}
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900">${biz.business_name}</h1>
+        <p class="text-teal-600 text-sm font-medium">${catLabel(biz.category)}</p>
+        ${avg ? `<div class="flex items-center gap-1 mt-1">${starsHtml(Math.round(avg))}<span class="text-sm text-gray-500 ml-1">${avg} (${reviews.length} review${reviews.length !== 1 ? 's' : ''})</span></div>` : ''}
+      </div>
+    </div>
+    ${biz.description ? `<p class="text-gray-600 mb-5">${biz.description}</p>` : ''}
+    <div class="bg-gray-50 rounded-xl p-4 mb-5 text-sm space-y-1">
+      ${biz.address ? `<p><span class="text-gray-400 w-16 inline-block">Address</span><span class="text-gray-700">${biz.address}, ${biz.city} ${biz.state} ${biz.postcode}</span></p>` : ''}
+      ${biz.phone   ? `<p><span class="text-gray-400 w-16 inline-block">Phone</span><a href="tel:${biz.phone}" class="text-teal-600 hover:underline">${biz.phone}</a></p>` : ''}
+      ${biz.email   ? `<p><span class="text-gray-400 w-16 inline-block">Email</span><a href="mailto:${biz.email}" class="text-teal-600 hover:underline">${biz.email}</a></p>` : ''}
+      ${biz.website ? `<p><span class="text-gray-400 w-16 inline-block">Web</span><a href="${biz.website}" target="_blank" class="text-teal-600 hover:underline">${biz.website}</a></p>` : ''}
+    </div>
+    ${photos?.length ? `<div class="grid grid-cols-4 gap-2 mb-6">${photos.map(p => `<img src="${p.photo_url}" class="aspect-square object-cover rounded-lg">`).join('')}</div>` : ''}
+    <h2 class="font-semibold text-gray-900 mb-3">Available slots</h2>
+    ${slots?.length
+      ? `<div class="grid sm:grid-cols-2 gap-2 mb-6">${slots.map(s => `
+          <div class="flex items-center justify-between bg-white border border-gray-100 rounded-xl p-4">
+            <div>
+              <p class="font-medium text-sm text-gray-900">${fmtDate(s.slot_date)}</p>
+              <p class="text-xs text-gray-500">${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="text-right"><p class="font-bold text-teal-600">$${s.discounted_price}</p><p class="text-xs text-gray-400 line-through">$${s.original_price}</p></div>
+              <button onclick="openBookModal('${s.id}','${s.slot_date}','${s.start_time}','${s.end_time}',${s.discounted_price})"
+                class="px-3 py-1.5 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 transition-colors">Book</button>
+            </div>
+          </div>`).join('')}</div>`
+      : `<p class="text-gray-400 text-sm mb-6">No slots available right now. Check back soon.</p>`}
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold text-gray-900">Reviews</h2>
+      ${currentUser?.user_metadata?.account_type === 'client' ? `<button onclick="openReviewModal()" class="text-sm text-teal-600 hover:text-teal-700">+ Write a review</button>` : ''}
+    </div>
+    ${reviews?.length
+      ? reviews.map(r => `
+        <div class="bg-white rounded-xl border border-gray-100 p-4 mb-3">
+          <div class="flex items-center gap-2 mb-1">${starsHtml(r.rating)}<span class="text-xs text-gray-400">${new Date(r.created_at).toLocaleDateString('en-AU')}</span></div>
+          ${r.comment ? `<p class="text-sm text-gray-700">${r.comment}</p>` : ''}
+          ${r.business_reply ? `<div class="mt-3 pl-3 border-l-2 border-teal-200"><p class="text-xs font-semibold text-teal-700 mb-0.5">Response from the business</p><p class="text-sm text-gray-600">${r.business_reply}</p></div>` : ''}
+          ${currentUser?.id === bizId && !r.business_reply ? `<div class="flex gap-2 mt-3"><input id="reply-${r.id}" type="text" placeholder="Write a reply…" class="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"><button onclick="submitReply('${r.id}')" class="px-3 py-1.5 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700">Reply</button></div>` : ''}
+        </div>`).join('')
+      : `<p class="text-gray-400 text-sm">No reviews yet. Be the first to leave one!</p>`}
+  `
+}
+
+function openBookModal(slotId, date, start, end, price) {
+  if (!currentUser) { alert('Please sign in to book'); switchTab('login'); return }
+  selectedSlotId = slotId
+  document.getElementById('book-slot-info').innerHTML = `<strong>${fmtDate(date)}</strong> · ${fmtTime(start)} – ${fmtTime(end)} · <span class="text-teal-600 font-semibold">$${price}</span>`
+  document.getElementById('book-name').value  = currentUser.user_metadata?.full_name || ''
+  document.getElementById('book-email').value = currentUser.email || ''
+  document.getElementById('book-phone').value = ''
+  document.getElementById('book-error').classList.add('hidden')
+  document.getElementById('modal-book').classList.remove('hidden')
+}
+
+async function confirmBooking() {
+  const name = document.getElementById('book-name').value.trim()
+  const email = document.getElementById('book-email').value.trim()
+  const phone = document.getElementById('book-phone').value.trim()
+  const err   = document.getElementById('book-error')
+  if (!name || !email) { err.textContent = 'Name and email are required'; err.classList.remove('hidden'); return }
+  const { data: slot } = await db.from('time_slots').select('business_id, discounted_price').eq('id', selectedSlotId).single()
+  if (!slot) { err.textContent = 'Slot not found'; err.classList.remove('hidden'); return }
+  const { error } = await db.from('bookings').insert({
+    slot_id: selectedSlotId, client_id: currentUser.id,
+    business_id: slot.business_id,
+    client_name: name, client_email: email, client_phone: phone,
+    status: 'confirmed'
+  })
+  if (error) { err.textContent = error.message; err.classList.remove('hidden'); return }
+  await db.from('time_slots').update({ status: 'booked' }).eq('id', selectedSlotId)
+  closeModal('modal-book')
+  alert('✓ Booking confirmed! Your practitioner will be in touch.')
+  openPractice(slot.business_id)
+}
+
+// ─── REVIEWS ─────────────────────────────────────────────────────────────────
+function openReviewModal() {
+  selectedRating = 5
+  document.getElementById('review-comment').value = ''
+  document.getElementById('review-error').classList.add('hidden')
+  renderStarInput()
+  document.getElementById('modal-review').classList.remove('hidden')
+}
+
+function renderStarInput() {
+  document.getElementById('star-input').innerHTML = [1,2,3,4,5].map(n =>
+    `<span onclick="selectStar(${n})" class="cursor-pointer text-3xl leading-none" style="color:${n<=selectedRating?'#f59e0b':'#d1d5db'}">★</span>`
+  ).join('')
+}
+
+function selectStar(n) { selectedRating = n; renderStarInput() }
+
+async function submitReview() {
+  const comment = document.getElementById('review-comment').value
+  const err = document.getElementById('review-error')
+  const { error } = await db.from('reviews').insert({
+    business_id: currentBizId, client_id: currentUser.id, rating: selectedRating, comment
+  })
+  if (error) { err.textContent = error.message; err.classList.remove('hidden'); return }
+  closeModal('modal-review')
+  openPractice(currentBizId)
+}
+
+async function submitReply(reviewId) {
+  const text = document.getElementById(`reply-${reviewId}`).value
+  if (!text.trim()) return
+  await db.from('reviews').update({ business_reply: text }).eq('id', reviewId)
+  openPractice(currentBizId)
+}
+
+// ─── UTILITIES ───────────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.add('hidden') }
+
+function distKm(lat1, lng1, lat2, lng2) {
+  const R = 6371, dL = (lat2-lat1)*Math.PI/180, dG = (lng2-lng1)*Math.PI/180
+  const a = Math.sin(dL/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dG/2)**2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+}
+
+function fmtDate(s) {
+  return new Date(s + 'T00:00:00').toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' })
+}
+
+function fmtTime(s) {
+  if (!s) return ''
+  const [h, m] = s.split(':'), hr = parseInt(h)
+  return `${hr > 12 ? hr-12 : hr||12}:${m} ${hr >= 12 ? 'pm' : 'am'}`
+}
+
+function starsHtml(r) {
+  return [1,2,3,4,5].map(n => `<span style="color:${n<=r?'#f59e0b':'#d1d5db'};font-size:16px">★</span>`).join('')
+}
+
+function catLabel(cat) {
+  const L = { physiotherapy:'Physiotherapy',chiropractic:'Chiropractic',osteopathy:'Osteopathy',
+    dietitian:'Dietitian',occupational_therapy:'Occupational Therapy',speech_pathology:'Speech Pathology',
+    podiatry:'Podiatry',psychology:'Psychology',exercise_physiology:'Exercise Physiology',
+    optometry:'Optometry',audiology:'Audiology',radiography:'Radiography',dental:'Dental',
+    pharmacy:'Pharmacy',naturopathy:'Naturopathy',acupuncture:'Acupuncture',
+    massage_therapy:'Massage Therapy',myotherapy:'Myotherapy',
+    sauna:'Sauna',spa:'Spa',steam_room:'Steam Room',gym:'Gym',pilates:'Pilates',yoga:'Yoga' }
+  return L[cat] || cat || 'Allied Health'
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+db.auth.onAuthStateChange((event, session) => {
+  currentUser = session?.user || null
+  updateNavbar()
+  if (currentUser) {
+    showView(currentUser.user_metadata?.account_type === 'business' ? 'business-dashboard' : 'client-feed')
+  } else {
+    showView('auth')
+  }
+})
+</script>
+</body>
+</html>
