@@ -6,9 +6,18 @@
   <title>AppointmentOne</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <!-- Leaflet for map view -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Stripe.js -->
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
     .view { display: none; }
     .view.active { display: block; }
+    #feed-map { height: 500px; border-radius: 12px; overflow: hidden; }
+    .leaflet-popup-content-wrapper { border-radius: 12px; }
+    .map-popup-btn { background: #0d9488; color: #fff; border: none; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-top: 6px; width: 100%; }
+    .map-popup-btn:hover { background: #0f766e; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -315,25 +324,43 @@
       Enable location
     </button>
   </div>
-  <!-- Category filters -->
-  <div class="flex gap-2 flex-wrap mb-6">
-    <button onclick="filterCat('')" data-cat="" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-teal-600 text-white border border-teal-600">All</button>
-    <button onclick="filterCat('physiotherapy')" data-cat="physiotherapy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Physiotherapy</button>
-    <button onclick="filterCat('chiropractic')" data-cat="chiropractic" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Chiropractic</button>
-    <button onclick="filterCat('osteopathy')" data-cat="osteopathy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Osteopathy</button>
-    <button onclick="filterCat('massage_therapy')" data-cat="massage_therapy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Massage</button>
-    <button onclick="filterCat('psychology')" data-cat="psychology" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Psychology</button>
-    <button onclick="filterCat('dietitian')" data-cat="dietitian" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Dietitian</button>
-    <button onclick="filterCat('podiatry')" data-cat="podiatry" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Podiatry</button>
-    <button onclick="filterCat('exercise_physiology')" data-cat="exercise_physiology" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Exercise Physiology</button>
-    <button onclick="filterCat('pilates')" data-cat="pilates" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Pilates</button>
-    <button onclick="filterCat('yoga')" data-cat="yoga" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Yoga</button>
-    <button onclick="filterCat('gym')" data-cat="gym" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Gym</button>
-    <button onclick="filterCat('sauna')" data-cat="sauna" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Sauna</button>
-    <button onclick="filterCat('spa')" data-cat="spa" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Spa</button>
-    <button onclick="filterCat('acupuncture')" data-cat="acupuncture" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Acupuncture</button>
-    <button onclick="filterCat('naturopathy')" data-cat="naturopathy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Naturopathy</button>
+  <!-- Category filters + view toggle -->
+  <div class="flex items-center justify-between gap-2 mb-4 flex-wrap">
+    <div class="flex gap-2 flex-wrap">
+      <button onclick="filterCat('')" data-cat="" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-teal-600 text-white border border-teal-600">All</button>
+      <button onclick="filterCat('physiotherapy')" data-cat="physiotherapy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Physiotherapy</button>
+      <button onclick="filterCat('chiropractic')" data-cat="chiropractic" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Chiropractic</button>
+      <button onclick="filterCat('osteopathy')" data-cat="osteopathy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Osteopathy</button>
+      <button onclick="filterCat('massage_therapy')" data-cat="massage_therapy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Massage</button>
+      <button onclick="filterCat('psychology')" data-cat="psychology" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Psychology</button>
+      <button onclick="filterCat('dietitian')" data-cat="dietitian" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Dietitian</button>
+      <button onclick="filterCat('podiatry')" data-cat="podiatry" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Podiatry</button>
+      <button onclick="filterCat('exercise_physiology')" data-cat="exercise_physiology" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Exercise Physiology</button>
+      <button onclick="filterCat('pilates')" data-cat="pilates" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Pilates</button>
+      <button onclick="filterCat('yoga')" data-cat="yoga" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Yoga</button>
+      <button onclick="filterCat('gym')" data-cat="gym" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Gym</button>
+      <button onclick="filterCat('sauna')" data-cat="sauna" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Sauna</button>
+      <button onclick="filterCat('spa')" data-cat="spa" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Spa</button>
+      <button onclick="filterCat('acupuncture')" data-cat="acupuncture" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Acupuncture</button>
+      <button onclick="filterCat('naturopathy')" data-cat="naturopathy" class="cat-btn px-3 py-1.5 rounded-full text-sm bg-white text-gray-600 border border-gray-200 hover:border-teal-400">Naturopathy</button>
+    </div>
+    <!-- List / Map toggle -->
+    <div class="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+      <button id="btn-list-view" onclick="setFeedView('list')"
+        class="px-3 py-1.5 text-sm bg-teal-600 text-white flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        List
+      </button>
+      <button id="btn-map-view" onclick="setFeedView('map')"
+        class="px-3 py-1.5 text-sm bg-white text-gray-600 flex items-center gap-1.5 hover:bg-gray-50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+        Map
+      </button>
+    </div>
   </div>
+  <!-- Map container (hidden by default) -->
+  <div id="feed-map" class="hidden mb-6"></div>
+  <!-- List grid -->
   <div id="feed-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 </div>
 
@@ -345,12 +372,12 @@
   <div id="practice-content"></div>
 </div>
 
-<!-- ═══ MODAL: ADD SLOT ════════════════════════════════════════════════════════ -->
+<!-- ═══ MODAL: ADD / EDIT SLOT ════════════════════════════════════════════════ -->
 <div id="modal-slot" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-xl p-6 w-full max-w-sm">
-    <h3 class="font-semibold text-gray-900 mb-0.5">Add timeslot</h3>
+  <div class="bg-white rounded-xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+    <h3 class="font-semibold text-gray-900 mb-0.5" id="modal-slot-title">Add timeslot</h3>
     <p class="text-sm text-gray-500 mb-4" id="modal-date-label"></p>
-    <div class="space-y-3">
+    <div class="space-y-4">
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Start time</label>
@@ -363,13 +390,43 @@
             class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
         </div>
       </div>
-      <div class="bg-teal-50 rounded-lg p-3 text-sm text-teal-800">
-        Discounted price: <strong id="slot-price-label">$0.00</strong> <span class="text-teal-600">(50% off)</span>
+
+      <!-- Service description -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Service / Package description <span class="text-gray-400">(optional)</span></label>
+        <textarea id="slot-description" rows="3" placeholder="e.g. Initial assessment + 45-min treatment. Includes postural analysis and take-home exercise plan."
+          class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"></textarea>
+      </div>
+
+      <!-- Price section -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-2">Pricing</label>
+        <div class="bg-teal-50 rounded-lg p-3 text-sm text-teal-800 mb-2">
+          Auto price (50% off hourly rate): <strong id="slot-price-label">$0.00</strong>
+        </div>
+        <div class="space-y-2">
+          <p class="text-xs text-gray-500 font-medium">— or override manually —</p>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Original price ($)</label>
+              <input type="number" id="slot-original-override" min="0" step="1" placeholder="e.g. 150"
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                oninput="updatePriceOverrideHint()">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Discounted price ($)</label>
+              <input type="number" id="slot-discounted-override" min="0" step="1" placeholder="e.g. 75"
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                oninput="updatePriceOverrideHint()">
+            </div>
+          </div>
+          <p id="price-override-hint" class="text-xs text-gray-400 hidden"></p>
+        </div>
       </div>
     </div>
     <div class="flex gap-2 mt-5">
       <button onclick="closeModal('modal-slot')" class="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-      <button onclick="saveSlot()" class="flex-1 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700">Add slot</button>
+      <button onclick="saveSlot()" id="save-slot-btn" class="flex-1 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700">Add slot</button>
     </div>
   </div>
 </div>
@@ -395,11 +452,22 @@
         <input id="book-phone" type="tel"
           class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
       </div>
+      <!-- $10 booking fee notice -->
+      <div class="bg-teal-50 border border-teal-100 rounded-lg p-3 text-sm text-teal-800">
+        <div class="flex items-center gap-2 font-semibold mb-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          $10 booking fee
+        </div>
+        <p class="text-xs text-teal-700">A non-refundable $10 fee secures your appointment. You will be redirected to Stripe to pay safely.</p>
+      </div>
       <div id="book-error" class="hidden text-red-600 text-sm p-3 bg-red-50 rounded-lg"></div>
     </div>
     <div class="flex gap-2 mt-5">
       <button onclick="closeModal('modal-book')" class="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600">Cancel</button>
-      <button onclick="confirmBooking()" class="flex-1 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700">Book now</button>
+      <button onclick="initiatePayment()" id="pay-btn" class="flex-1 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 flex items-center justify-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        Pay $10 &amp; Book
+      </button>
     </div>
   </div>
 </div>
@@ -432,12 +500,17 @@
 ═══════════════════════════════════════════════════════════════════════════ -->
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-// CONFIG: Replace these two values with your Supabase project details
-// Find them in: supabase.com → your project → Settings → API
+// CONFIG: Replace these with your actual values
 // ─────────────────────────────────────────────────────────────────────────────
-// ✅ FIXED: Everything is on one line
 const SUPABASE_URL  = 'https://wqskauwqfawathnqlvfs.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc2thdXdxZmF3YXRobnFsdmZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTgzMDgsImV4cCI6MjA5MDE3NDMwOH0.vwmMAKyLbEQIBx-ezf6ZxI5fncmdaxOMwic9h_4Z5Kc';
+
+// ─── STRIPE CONFIG ────────────────────────────────────────────────────────────
+// 1. Go to dashboard.stripe.com → Payment Links → Create a $10 link
+// 2. In your Payment Link settings, set the success URL to:
+//    YOUR_APP_URL?booking_success=1
+// 3. Paste your Payment Link URL below (keep the ?client_reference_id= part at the end)
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/YOUR_LINK_HERE'; // ← REPLACE THIS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { createClient } = window.supabase
@@ -447,6 +520,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY)
 let currentUser     = null
 let selectedDate    = null
 let selectedSlotId  = null
+let editingSlotId   = null   // null = add mode, string = edit mode
 let currentBizId    = null
 let selectedRating  = 5
 let calYear         = new Date().getFullYear()
@@ -458,6 +532,9 @@ let clientLat       = null
 let clientLng       = null
 let bizRate         = 0
 let signupType      = 'client'
+let feedView        = 'list'  // 'list' or 'map'
+let feedMap         = null    // Leaflet map instance
+let feedMapMarkers  = []
 
 // ─── ROUTER ──────────────────────────────────────────────────────────────────
 function showView(name) {
@@ -611,7 +688,6 @@ async function saveProfile() {
   msg.className = 'p-3 rounded-lg text-sm bg-gray-50 text-gray-600'
   msg.textContent = 'Saving…'; msg.classList.remove('hidden')
 
-  // Free geocoding via OpenStreetMap — no API key needed
   let lat = null, lng = null
   const fullAddr = [address, city, state, postcode, 'Australia'].filter(Boolean).join(', ')
   try {
@@ -688,7 +764,6 @@ async function loadCalSlots() {
     .gte('slot_date', new Date().toISOString().split('T')[0])
     .order('slot_date').order('start_time')
   calSlots = data || []
-  // Refresh rate
   const { data: bp } = await db.from('business_profiles').select('hourly_rate').eq('id', currentUser.id).single()
   bizRate = parseFloat(bp?.hourly_rate) || 0
   renderSlotList()
@@ -696,7 +771,7 @@ async function loadCalSlots() {
 
 function renderCalendar() {
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
-  const firstDay   = new Date(calYear, calMonth, 1).getDay()
+  const firstDay    = new Date(calYear, calMonth, 1).getDay()
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
   document.getElementById('cal-month-label').textContent = `${MONTHS[calMonth]} ${calYear}`
 
@@ -734,45 +809,123 @@ function renderSlotList() {
     el.innerHTML = '<p class="text-gray-400">No upcoming slots yet. Click a date to add one.</p>'; return
   }
   el.innerHTML = calSlots.map(s => `
-    <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-      <div>
-        <span class="font-medium text-gray-800">${fmtDate(s.slot_date)}</span>
-        <span class="text-gray-500 ml-2">${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</span>
-        <span class="ml-2 text-xs px-2 py-0.5 rounded-full ${s.status === 'booked' ? 'bg-green-100 text-green-700' : 'bg-teal-100 text-teal-700'}">${s.status}</span>
+    <div class="py-3 border-b border-gray-50 last:border-0">
+      <div class="flex items-start justify-between mb-1">
+        <div>
+          <span class="font-medium text-gray-800">${fmtDate(s.slot_date)}</span>
+          <span class="text-gray-500 ml-2">${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</span>
+          <span class="ml-2 text-xs px-2 py-0.5 rounded-full ${s.status === 'booked' ? 'bg-green-100 text-green-700' : 'bg-teal-100 text-teal-700'}">${s.status}</span>
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0 ml-2">
+          <div class="text-right">
+            <span class="text-teal-600 font-semibold">$${s.discounted_price}</span>
+            <span class="text-gray-400 text-xs line-through ml-1">$${s.original_price}</span>
+          </div>
+          ${s.status === 'available' ? `
+            <button onclick="openSlotModalEdit('${s.id}')" title="Edit" class="text-gray-400 hover:text-teal-600 text-sm leading-none px-1">✏️</button>
+            <button onclick="deleteSlot('${s.id}')" title="Delete" class="text-gray-300 hover:text-red-400 text-xl leading-none">&times;</button>
+          ` : ''}
+        </div>
       </div>
-      <div class="flex items-center gap-3">
-        <span class="text-teal-600 font-semibold">$${s.discounted_price}</span>
-        ${s.status === 'available' ? `<button onclick="deleteSlot('${s.id}')" class="text-gray-300 hover:text-red-400 text-xl leading-none">&times;</button>` : ''}
-      </div>
+      ${s.service_description ? `<p class="text-xs text-gray-500 mt-1 leading-relaxed">${s.service_description}</p>` : ''}
     </div>`).join('')
 }
 
 function prevMonth() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear-- } renderCalendar() }
 function nextMonth() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++ } renderCalendar() }
 
+function updatePriceOverrideHint() {
+  const orig = parseFloat(document.getElementById('slot-original-override').value)
+  const disc = parseFloat(document.getElementById('slot-discounted-override').value)
+  const hint = document.getElementById('price-override-hint')
+  if (orig && disc && orig > 0) {
+    const pct = Math.round((1 - disc/orig) * 100)
+    hint.textContent = `${pct}% discount applied`
+    hint.classList.remove('hidden')
+  } else {
+    hint.classList.add('hidden')
+  }
+}
+
+// Add mode: open slot modal for a new slot on given date
 function openSlotModal(dStr) {
-  selectedDate = dStr
+  editingSlotId = null
+  selectedDate  = dStr
   const d = new Date(dStr + 'T00:00:00')
+  document.getElementById('modal-slot-title').textContent = 'Add timeslot'
   document.getElementById('modal-date-label').textContent = d.toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
   document.getElementById('slot-price-label').textContent = `$${(bizRate / 2).toFixed(2)}`
   document.getElementById('slot-start').value = '09:00'
   document.getElementById('slot-end').value   = '10:00'
+  document.getElementById('slot-description').value = ''
+  document.getElementById('slot-original-override').value = ''
+  document.getElementById('slot-discounted-override').value = ''
+  document.getElementById('price-override-hint').classList.add('hidden')
+  document.getElementById('save-slot-btn').textContent = 'Add slot'
+  document.getElementById('modal-slot').classList.remove('hidden')
+}
+
+// Edit mode: open slot modal pre-filled with existing slot data
+async function openSlotModalEdit(slotId) {
+  const slot = calSlots.find(s => s.id === slotId)
+  if (!slot) return
+  editingSlotId = slotId
+  selectedDate  = slot.slot_date
+  const d = new Date(slot.slot_date + 'T00:00:00')
+  document.getElementById('modal-slot-title').textContent = 'Edit timeslot'
+  document.getElementById('modal-date-label').textContent = d.toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+  document.getElementById('slot-price-label').textContent = `$${(bizRate / 2).toFixed(2)}`
+  document.getElementById('slot-start').value = slot.start_time?.slice(0,5) || '09:00'
+  document.getElementById('slot-end').value   = slot.end_time?.slice(0,5) || '10:00'
+  document.getElementById('slot-description').value = slot.service_description || ''
+  document.getElementById('slot-original-override').value = slot.original_price || ''
+  document.getElementById('slot-discounted-override').value = slot.discounted_price || ''
+  updatePriceOverrideHint()
+  document.getElementById('save-slot-btn').textContent = 'Save changes'
   document.getElementById('modal-slot').classList.remove('hidden')
 }
 
 async function saveSlot() {
   const start = document.getElementById('slot-start').value
   const end   = document.getElementById('slot-end').value
+  const desc  = document.getElementById('slot-description').value.trim()
   if (!start || !end || start >= end) { alert('Enter valid start and end times (start must be before end)'); return }
-  const { error } = await db.from('time_slots').insert({
-    business_id:      currentUser.id,
-    slot_date:        selectedDate,
-    start_time:       start + ':00',
-    end_time:         end + ':00',
-    original_price:   bizRate,
-    discounted_price: Math.round((bizRate / 2) * 100) / 100,
-    status:           'available'
-  })
+
+  // Resolve price: use override if provided, else 50% of bizRate
+  const origOverride = parseFloat(document.getElementById('slot-original-override').value)
+  const discOverride = parseFloat(document.getElementById('slot-discounted-override').value)
+  const hasOverride  = !isNaN(origOverride) && !isNaN(discOverride) && origOverride > 0 && discOverride >= 0
+  const originalPrice   = hasOverride ? origOverride : bizRate
+  const discountedPrice = hasOverride ? discOverride : Math.round((bizRate / 2) * 100) / 100
+
+  const slotData = {
+    business_id:          currentUser.id,
+    slot_date:            selectedDate,
+    start_time:           start + ':00',
+    end_time:             end + ':00',
+    original_price:       originalPrice,
+    discounted_price:     discountedPrice,
+    service_description:  desc || null,
+    status:               'available'
+  }
+
+  let error
+  if (editingSlotId) {
+    // Edit mode
+    const res = await db.from('time_slots').update({
+      start_time:          slotData.start_time,
+      end_time:            slotData.end_time,
+      original_price:      slotData.original_price,
+      discounted_price:    slotData.discounted_price,
+      service_description: slotData.service_description
+    }).eq('id', editingSlotId)
+    error = res.error
+  } else {
+    // Add mode
+    const res = await db.from('time_slots').insert(slotData)
+    error = res.error
+  }
+
   if (error) { alert(error.message); return }
   closeModal('modal-slot')
   await loadCalSlots()
@@ -859,13 +1012,13 @@ function getLocation() {
 
 async function loadFeed() {
   const today = new Date().toISOString().split('T')[0]
+  // Only fetch slots with status = 'available' — booked slots won't appear
   const { data } = await db.from('business_profiles')
-    .select('*, time_slots!inner(id, slot_date, start_time, end_time, discounted_price, original_price, status)')
+    .select('*, time_slots!inner(id, slot_date, start_time, end_time, discounted_price, original_price, status, service_description)')
     .eq('is_active', true)
     .eq('time_slots.status', 'available')
     .gte('time_slots.slot_date', today)
 
-  // One deal per business — the earliest available slot
   const map = {}
   ;(data || []).forEach(b => {
     if (!b.time_slots?.length) return
@@ -878,12 +1031,98 @@ async function loadFeed() {
   renderFeed()
 }
 
+function setFeedView(view) {
+  feedView = view
+  const listBtn = document.getElementById('btn-list-view')
+  const mapBtn  = document.getElementById('btn-map-view')
+  const mapEl   = document.getElementById('feed-map')
+  const gridEl  = document.getElementById('feed-grid')
+
+  if (view === 'map') {
+    listBtn.className = 'px-3 py-1.5 text-sm bg-white text-gray-600 flex items-center gap-1.5 hover:bg-gray-50'
+    mapBtn.className  = 'px-3 py-1.5 text-sm bg-teal-600 text-white flex items-center gap-1.5'
+    mapEl.classList.remove('hidden')
+    gridEl.classList.add('hidden')
+    initFeedMap()
+  } else {
+    listBtn.className = 'px-3 py-1.5 text-sm bg-teal-600 text-white flex items-center gap-1.5'
+    mapBtn.className  = 'px-3 py-1.5 text-sm bg-white text-gray-600 flex items-center gap-1.5 hover:bg-gray-50'
+    mapEl.classList.add('hidden')
+    gridEl.classList.remove('hidden')
+  }
+}
+
+function initFeedMap() {
+  // Determine deals to show (apply current category + location filters)
+  let deals = allDeals
+  if (currentCategory) deals = deals.filter(d => d.category === currentCategory)
+  if (clientLat && clientLng) {
+    deals = deals.filter(d => !d.latitude || !d.longitude || distKm(clientLat, clientLng, d.latitude, d.longitude) <= 50)
+  }
+
+  const dealsWithCoords = deals.filter(d => d.latitude && d.longitude)
+  const centre = dealsWithCoords.length
+    ? [dealsWithCoords.reduce((s,d)=>s+d.latitude,0)/dealsWithCoords.length, dealsWithCoords.reduce((s,d)=>s+d.longitude,0)/dealsWithCoords.length]
+    : [-25.2744, 133.7751] // Australia centre fallback
+
+  if (!feedMap) {
+    feedMap = L.map('feed-map').setView(centre, dealsWithCoords.length ? 10 : 4)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(feedMap)
+  } else {
+    feedMap.setView(centre, dealsWithCoords.length ? 10 : 4)
+    feedMapMarkers.forEach(m => m.remove())
+    feedMapMarkers = []
+  }
+
+  const tealIcon = L.divIcon({
+    className: '',
+    html: `<div style="background:#0d9488;color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #fff">🏥</div>`,
+    iconSize: [32,32], iconAnchor: [16,16], popupAnchor: [0,-16]
+  })
+
+  dealsWithCoords.forEach(d => {
+    const marker = L.marker([d.latitude, d.longitude], { icon: tealIcon })
+      .addTo(feedMap)
+      .bindPopup(`
+        <div style="min-width:180px">
+          <strong style="font-size:14px">${d.business_name}</strong><br>
+          <span style="color:#6b7280;font-size:12px">${catLabel(d.category)}</span><br>
+          <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:#6b7280">${fmtDate(d.nextSlot.slot_date)}</span>
+            <span style="font-size:16px;font-weight:700;color:#0d9488">$${d.nextSlot.discounted_price}</span>
+          </div>
+          <button class="map-popup-btn" onclick="openPractice('${d.id}')">View deal →</button>
+        </div>`)
+    feedMapMarkers.push(marker)
+  })
+
+  if (dealsWithCoords.length === 0) {
+    const infoDiv = document.getElementById('feed-map')
+    const msg = document.createElement('div')
+    msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;background:white;padding:16px 24px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);text-align:center'
+    msg.innerHTML = '<p style="color:#6b7280;font-size:14px">No businesses with location data.<br>Ask businesses to complete their address.</p>'
+    infoDiv.style.position = 'relative'
+    infoDiv.appendChild(msg)
+  }
+
+  // Invalidate map size in case it was hidden
+  setTimeout(() => feedMap.invalidateSize(), 100)
+}
+
 function renderFeed() {
   let deals = allDeals
   if (currentCategory) deals = deals.filter(d => d.category === currentCategory)
   if (clientLat && clientLng) {
     deals = deals.filter(d => !d.latitude || !d.longitude || distKm(clientLat, clientLng, d.latitude, d.longitude) <= 50)
   }
+
+  if (feedView === 'map') {
+    initFeedMap()
+    return
+  }
+
   const el = document.getElementById('feed-grid')
   if (!deals.length) {
     el.innerHTML = `<div class="col-span-3 text-center py-16">
@@ -936,6 +1175,7 @@ async function openPractice(bizId) {
   const today = new Date().toISOString().split('T')[0]
   const [{ data: biz }, { data: slots }, { data: photos }, { data: reviews }] = await Promise.all([
     db.from('business_profiles').select('*').eq('id', bizId).single(),
+    // Only load available slots — prevents showing already-booked times to clients
     db.from('time_slots').select('*').eq('business_id', bizId).eq('status', 'available').gte('slot_date', today).order('slot_date').order('start_time').limit(12),
     db.from('business_photos').select('*').eq('business_id', bizId).order('sort_order'),
     db.from('reviews').select('*').eq('business_id', bizId).order('created_at', { ascending: false })
@@ -965,17 +1205,23 @@ async function openPractice(bizId) {
     ${photos?.length ? `<div class="grid grid-cols-4 gap-2 mb-6">${photos.map(p => `<img src="${p.photo_url}" class="aspect-square object-cover rounded-lg">`).join('')}</div>` : ''}
     <h2 class="font-semibold text-gray-900 mb-3">Available slots</h2>
     ${slots?.length
-      ? `<div class="grid sm:grid-cols-2 gap-2 mb-6">${slots.map(s => `
-          <div class="flex items-center justify-between bg-white border border-gray-100 rounded-xl p-4">
-            <div>
-              <p class="font-medium text-sm text-gray-900">${fmtDate(s.slot_date)}</p>
-              <p class="text-xs text-gray-500">${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</p>
+      ? `<div class="grid sm:grid-cols-2 gap-3 mb-6">${slots.map(s => `
+          <div class="bg-white border border-gray-100 rounded-xl p-4">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <p class="font-medium text-sm text-gray-900">${fmtDate(s.slot_date)}</p>
+                <p class="text-xs text-gray-500">${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</p>
+              </div>
+              <div class="text-right flex-shrink-0 ml-2">
+                <p class="font-bold text-teal-600">$${s.discounted_price}</p>
+                <p class="text-xs text-gray-400 line-through">$${s.original_price}</p>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <div class="text-right"><p class="font-bold text-teal-600">$${s.discounted_price}</p><p class="text-xs text-gray-400 line-through">$${s.original_price}</p></div>
-              <button onclick="openBookModal('${s.id}','${s.slot_date}','${s.start_time}','${s.end_time}',${s.discounted_price})"
-                class="px-3 py-1.5 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 transition-colors">Book</button>
-            </div>
+            ${s.service_description ? `<p class="text-xs text-gray-500 mb-3 leading-relaxed border-t border-gray-50 pt-2">${s.service_description}</p>` : ''}
+            <button onclick="openBookModal('${s.id}','${s.slot_date}','${s.start_time}','${s.end_time}',${s.discounted_price})"
+              class="w-full mt-1 px-3 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 transition-colors font-medium">
+              Book now — $10 fee
+            </button>
           </div>`).join('')}</div>`
       : `<p class="text-gray-400 text-sm mb-6">No slots available right now. Check back soon.</p>`}
     <div class="flex items-center justify-between mb-3">
@@ -994,10 +1240,12 @@ async function openPractice(bizId) {
   `
 }
 
+// ─── BOOKING + STRIPE PAYMENT ─────────────────────────────────────────────────
 function openBookModal(slotId, date, start, end, price) {
   if (!currentUser) { alert('Please sign in to book'); switchTab('login'); return }
   selectedSlotId = slotId
-  document.getElementById('book-slot-info').innerHTML = `<strong>${fmtDate(date)}</strong> · ${fmtTime(start)} – ${fmtTime(end)} · <span class="text-teal-600 font-semibold">$${price}</span>`
+  document.getElementById('book-slot-info').innerHTML =
+    `<strong>${fmtDate(date)}</strong> · ${fmtTime(start)} – ${fmtTime(end)} · <span class="text-teal-600 font-semibold">$${price}</span>`
   document.getElementById('book-name').value  = currentUser.user_metadata?.full_name || ''
   document.getElementById('book-email').value = currentUser.email || ''
   document.getElementById('book-phone').value = ''
@@ -1005,25 +1253,118 @@ function openBookModal(slotId, date, start, end, price) {
   document.getElementById('modal-book').classList.remove('hidden')
 }
 
-async function confirmBooking() {
-  const name = document.getElementById('book-name').value.trim()
+async function initiatePayment() {
+  const name  = document.getElementById('book-name').value.trim()
   const email = document.getElementById('book-email').value.trim()
   const phone = document.getElementById('book-phone').value.trim()
   const err   = document.getElementById('book-error')
-  if (!name || !email) { err.textContent = 'Name and email are required'; err.classList.remove('hidden'); return }
-  const { data: slot } = await db.from('time_slots').select('business_id, discounted_price').eq('id', selectedSlotId).single()
-  if (!slot) { err.textContent = 'Slot not found'; err.classList.remove('hidden'); return }
+
+  if (!name || !email) {
+    err.textContent = 'Name and email are required'
+    err.classList.remove('hidden')
+    return
+  }
+
+  // Check slot is still available before redirecting to payment
+  const { data: slot } = await db.from('time_slots')
+    .select('business_id, status, discounted_price')
+    .eq('id', selectedSlotId)
+    .single()
+
+  if (!slot) {
+    err.textContent = 'Slot not found. Please go back and try again.'
+    err.classList.remove('hidden')
+    return
+  }
+  if (slot.status !== 'available') {
+    err.textContent = 'Sorry, this slot was just booked by someone else. Please choose another time.'
+    err.classList.remove('hidden')
+    // Reload practice page to show updated availability
+    setTimeout(() => { closeModal('modal-book'); openPractice(slot.business_id) }, 2000)
+    return
+  }
+
+  // Save pending booking to localStorage for retrieval after payment redirect
+  const pendingBooking = {
+    slotId:     selectedSlotId,
+    businessId: slot.business_id,
+    clientId:   currentUser.id,
+    name, email, phone,
+    timestamp:  Date.now()
+  }
+  localStorage.setItem('pendingBooking', JSON.stringify(pendingBooking))
+
+  // Mark slot as 'pending' to soft-lock it during checkout (prevents double booking)
+  await db.from('time_slots').update({ status: 'pending' }).eq('id', selectedSlotId)
+
+  // Build Stripe Payment Link URL
+  // The success_url is set in your Stripe dashboard → Payment Link → Settings
+  // It should point back to this app's URL with ?booking_success=1
+  const stripeUrl = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${selectedSlotId}`
+
+  const btn = document.getElementById('pay-btn')
+  btn.textContent = 'Redirecting to Stripe…'
+  btn.disabled = true
+
+  // Short delay so user sees the redirect message
+  setTimeout(() => { window.location.href = stripeUrl }, 800)
+}
+
+// Called on page load if returning from Stripe payment
+async function checkPaymentReturn() {
+  const params = new URLSearchParams(window.location.search)
+  if (!params.get('booking_success')) return
+
+  // Clean URL so refreshing doesn't re-trigger
+  window.history.replaceState({}, document.title, window.location.pathname)
+
+  const raw = localStorage.getItem('pendingBooking')
+  if (!raw) return
+  const pending = JSON.parse(raw)
+
+  // Check it's not stale (30 min window)
+  if (Date.now() - pending.timestamp > 30 * 60 * 1000) {
+    localStorage.removeItem('pendingBooking')
+    return
+  }
+
+  // Verify slot is still pending (our soft lock)
+  const { data: slot } = await db.from('time_slots')
+    .select('status, business_id')
+    .eq('id', pending.slotId)
+    .single()
+
+  if (!slot || (slot.status !== 'pending' && slot.status !== 'available')) {
+    localStorage.removeItem('pendingBooking')
+    return
+  }
+
+  // Create the booking record
   const { error } = await db.from('bookings').insert({
-    slot_id: selectedSlotId, client_id: currentUser.id,
-    business_id: slot.business_id,
-    client_name: name, client_email: email, client_phone: phone,
-    status: 'confirmed'
+    slot_id:      pending.slotId,
+    client_id:    pending.clientId,
+    business_id:  pending.businessId,
+    client_name:  pending.name,
+    client_email: pending.email,
+    client_phone: pending.phone,
+    status:       'confirmed'
   })
-  if (error) { err.textContent = error.message; err.classList.remove('hidden'); return }
-  await db.from('time_slots').update({ status: 'booked' }).eq('id', selectedSlotId)
-  closeModal('modal-book')
-  alert('✓ Booking confirmed! Your practitioner will be in touch.')
-  openPractice(slot.business_id)
+
+  if (error) {
+    // Roll back the slot to available if booking failed
+    await db.from('time_slots').update({ status: 'available' }).eq('id', pending.slotId)
+    alert('Booking failed: ' + error.message + '\nPlease contact support.')
+    localStorage.removeItem('pendingBooking')
+    return
+  }
+
+  // Mark slot as booked
+  await db.from('time_slots').update({ status: 'booked' }).eq('id', pending.slotId)
+  localStorage.removeItem('pendingBooking')
+
+  // Show success and load feed
+  alert('✅ Payment successful! Your booking is confirmed. Your practitioner will be in touch shortly.')
+  showView('client-feed')
 }
 
 // ─── REVIEWS ─────────────────────────────────────────────────────────────────
@@ -1096,11 +1437,14 @@ function catLabel(cat) {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-db.auth.onAuthStateChange((event, session) => {
+db.auth.onAuthStateChange(async (event, session) => {
   currentUser = session?.user || null
   updateNavbar()
   if (currentUser) {
-    showView(currentUser.user_metadata?.account_type === 'business' ? 'business-dashboard' : 'client-feed')
+    const accountType = currentUser.user_metadata?.account_type
+    // Check for Stripe payment return before navigating
+    await checkPaymentReturn()
+    showView(accountType === 'business' ? 'business-dashboard' : 'client-feed')
   } else {
     showView('auth')
   }
